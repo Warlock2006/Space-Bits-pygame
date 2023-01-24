@@ -60,6 +60,7 @@ laser_sound3 = pygame.mixer.Sound('Laser_shoot 85 (1).wav')
 hit_sound = pygame.mixer.Sound('Hit_hurt 64.wav')
 explosion_sound = pygame.mixer.Sound('Explosion 20.wav')
 clicksound = pygame.mixer.Sound('click.wav')
+win_sound = pygame.mixer.Sound('You Win (Street Fighter) - Sound Effect (256  kbps).mp3')
 pygame.mixer.music.load('Lost In The Neon Light - Fei Theme 8 bit (Space Rangers cover).mp3')
 pygame.mixer.music.set_volume(0.5)
 pygame.mixer.music.play()
@@ -667,6 +668,7 @@ class MyGame(Game):
             if self.boss_was_spawned:
                 if not self.boss.is_alive:
                     self.show_win = True
+                    win_sound.play()
                     self.boss_was_spawned = False
                     for s in self.all_sprites:
                         s.kill()
