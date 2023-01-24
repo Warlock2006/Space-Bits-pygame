@@ -51,10 +51,13 @@ class Game:
 width, height = 1920, 1080
 screen = pygame.display.set_mode((width, height))
 pygame.init()
-showing_menu = True
+pygame.font.init()
+font = pygame.font.Font("MinimalPixel v2.ttf", 20)
+score_image = pygame.image.load('score_text.png')
 laser_sound1 = pygame.mixer.Sound('Laser_shoot 66.wav')
 laser_sound2 = pygame.mixer.Sound('Laser_shoot 70 (1).wav')
 laser_sound3 = pygame.mixer.Sound('Laser_shoot 85 (1).wav')
+hit_sound = pygame.mixer.Sound('Hit_hurt 64.wav')
 explosion_sound = pygame.mixer.Sound('Explosion 20.wav')
 clicksound = pygame.mixer.Sound('click.wav')
 pygame.mixer.music.load('Lost In The Neon Light - Fei Theme 8 bit (Space Rangers cover).mp3')
@@ -147,6 +150,7 @@ class Player(pygame.sprite.Sprite):
         self.is_moving_back = None
         self.is_alive = True
         self.is_shooting = False
+        self.score = 0
         self.timer = 0
         self.bullets = pygame.sprite.Group()
 
@@ -250,6 +254,7 @@ class BaseEnemy(pygame.sprite.Sprite):
                 self.is_alive = False
                 exp = Explosion((self.rect.x, self.rect.y), (50, 50), self.player.bullets)
                 explosion_sound.play()
+                self.player.score += 10
                 self.kill()
                 b.kill()
         self.move()
@@ -305,6 +310,7 @@ class ShootingEnemy(BaseEnemy):
                 b.kill()
                 exp = Explosion((self.rect.x, self.rect.y), (50, 50), self.player.bullets)
                 explosion_sound.play()
+                self.player.score += 20
                 self.kill()
         self.move()
 
@@ -347,11 +353,14 @@ class Boss(pygame.sprite.Sprite):
         for b in self.player.bullets:
             if self.rect.colliderect(b.rect):
                 self.hp -= 1
+                hit_sound.set_volume(0.3)
+                hit_sound.play()
                 b.kill()
         if self.hp == 0:
             self.is_alive = False
             explosion = Explosion((self.rect.x, self.rect.y), (100, 100), self.player.bullets)
             explosion_sound.play()
+            self.player.score += 100
             self.kill()
         self.move()
 
@@ -501,6 +510,21 @@ class Menu:
         self.menu_components.update()
 
 
+class Score(pygame.sprite.Sprite):
+    def __init__(self, pos, player: Player, *groups):
+        super().__init__(*groups)
+        self.image = pygame.image.load('score_text.png')
+        self.image = pygame.transform.scale(self.image, (110, 35))
+        self.rect = self.image.get_rect()
+        self.player = player
+        self.rect.left, self.rect.bottom = pos
+
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        score = font.render(f'{self.player.score}', True, (255, 255, 255))
+        score = pygame.transform.scale(score, (score.get_width() * 2, score.get_height() * 2))
+        screen.blit(score, (self.rect.right + 10, self.rect.top))
+
+
 class MyGame(Game):
 
     def __init__(self, width: int, height: int, screen):
@@ -519,6 +543,7 @@ class MyGame(Game):
         self.show_win = False
         self.player_registered = False
         self.space_spawned = False
+        self.score = None
         self.wave = 1
         self.timer = 450
         self.all_killed = True
@@ -552,6 +577,9 @@ class MyGame(Game):
                 self.show_game_over = False
                 self.wave = 1
                 self.timer = 450
+                if self.score:
+                    self.score.kill()
+                    self.score = None
                 self.setup_game()
             if self.game_over.exit_button.is_clicked:
                 self.running = False
@@ -560,6 +588,9 @@ class MyGame(Game):
                 self.show_win = False
                 self.wave = 1
                 self.timer = 450
+                if self.score:
+                    self.score.kill()
+                    self.score = None
                 self.setup_game()
             if self.win.exit_button.is_clicked:
                 self.running = False
@@ -570,6 +601,8 @@ class MyGame(Game):
             for component in self.menu.menu_components:
                 component.kill()
             self.player = Player((width // 2 - 20, height - 100), self.all_sprites, self.enemies)
+            if not self.score:
+                self.score = Score((0, height), self.player, self.bg)
             if not self.player_registered:
                 self.register_event(pygame.KEYDOWN, self.player.set_flags)
                 self.register_event(pygame.KEYUP, self.player.set_flags)
@@ -634,6 +667,7 @@ class MyGame(Game):
             if self.boss_was_spawned:
                 if not self.boss.is_alive:
                     self.show_win = True
+                    self.boss_was_spawned = False
                     for s in self.all_sprites:
                         s.kill()
             for e in self.enemies:
@@ -644,6 +678,8 @@ class MyGame(Game):
             self.menu.update()
         elif self.show_game_over:
             self.game_over.update()
+        elif self.show_win:
+            self.win.update()
 
 
 if __name__ == '__main__':
