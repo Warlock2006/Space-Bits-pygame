@@ -48,10 +48,14 @@ class Game:
         pass
 
 
-width, height = 1920, 1080
+width, height = 1720, 1024
 screen = pygame.display.set_mode((width, height))
 pygame.init()
 pygame.font.init()
+pygame.display.set_caption('Space Bits')
+icon = pygame.image.load('main_ship_idle.png')
+icon = pygame.transform.scale(icon, (32, 32))
+pygame.display.set_icon(icon)
 font = pygame.font.Font("MinimalPixel v2.ttf", 20)
 score_image = pygame.image.load('score_text.png')
 laser_sound1 = pygame.mixer.Sound('Laser_shoot 66.wav')
@@ -70,7 +74,7 @@ class Space(pygame.sprite.Sprite):
     def __init__(self, loc, *groups: AbstractGroup):
         super().__init__(*groups)
         self.image = pygame.image.load('space.png')
-        self.image = pygame.transform.scale(self.image, (1920, 1080))
+        self.image = pygame.transform.scale(self.image, (width, height))
         self.rect = self.image.get_rect()
         self.rect.left, self.rect.bottom = loc
 
